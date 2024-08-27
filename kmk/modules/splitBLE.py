@@ -27,10 +27,6 @@ class SplitBLE(Module):
         split_side=None,
         split_target_left=True,
         uart_interval=20,
-        data_pin=None,
-        data_pin2=None,
-        uart_flip=True,
-        use_pio=False,
         debug_enabled=False,
     ):
         self._is_target = True
@@ -39,10 +35,6 @@ class SplitBLE(Module):
         self.split_side = split_side
         self.split_target_left = split_target_left
         self.split_offset = None
-        self.data_pin = data_pin
-        self.data_pin2 = data_pin2
-        self.uart_flip = uart_flip
-        self._use_pio = use_pio
         self._uart = None
         self._uart_interval = uart_interval
         self._debug_enabled = debug_enabled

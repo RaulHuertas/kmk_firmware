@@ -1,10 +1,8 @@
-import board
 import digitalio
 from supervisor import ticks_ms
 
 from time import sleep
 
-from kmk.keys import make_key
 from kmk.kmktime import check_deadline
 from kmk.modules import Module
 
@@ -16,13 +14,19 @@ class Power(Module):
         self._powersave_start = ticks_ms()
         self._usb_last_scan = ticks_ms() - 5000
         self._psp = None  # Powersave pin object
-        self._i2c = 0
-        self._i2c_deinit_count = 0
+        # self._i2c = 0
+        # self._i2c_deinit_count = 0
         self._loopcounter = 0
 
-        make_key(names=('PS_TOG',), on_press=self._ps_tog)
-        make_key(names=('PS_ON',), on_press=self._ps_enable)
-        make_key(names=('PS_OFF',), on_press=self._ps_disable)
+        # make_key(
+        #     names=('PS_TOG',), on_press=self._ps_tog, on_release=handler_passthrough
+        # )
+        # make_key(
+        #     names=('PS_ON',), on_press=self._ps_enable, on_release=handler_passthrough
+        # )
+        # make_key(
+        #     names=('PS_OFF',), on_press=self._ps_disable, on_release=handler_passthrough
+        # )
 
     def __repr__(self):
         return f'Power({self._to_dict()})'
@@ -37,7 +41,8 @@ class Power(Module):
         }
 
     def during_bootup(self, keyboard):
-        self._i2c_scan()
+        #self._i2c_scan()
+        pass
 
     def before_matrix_scan(self, keyboard):
         return
@@ -68,7 +73,8 @@ class Power(Module):
 
     def enable_powersave(self, keyboard):
         '''Enables power saving features'''
-        if self._i2c_deinit_count >= self._i2c and self.powersave_pin:
+        #if self._i2c_deinit_count >= self._i2c and self.powersave_pin:
+        if  self.powersave_pin:
             # Allows power save to prevent RGB drain.
             # Example here https://docs.nicekeyboards.com/#/nice!nano/pinout_schematic
 
@@ -97,47 +103,12 @@ class Power(Module):
         '''
         Sleeps longer and longer to save power the more time in between updates.
         '''
-        if check_deadline(ticks_ms(), self._powersave_start, 60000):
-            sleep(8 / 1000)
-        elif check_deadline(ticks_ms(), self._powersave_start, 240000) is False:
+        if check_deadline(ticks_ms(), self._powersave_start, 30000):
+            sleep(12 / 1000)
+        elif check_deadline(ticks_ms(), self._powersave_start, 120000) is False:
             sleep(180 / 1000)
         return
 
     def psave_time_reset(self):
         self._powersave_start = ticks_ms()
 
-    def _i2c_scan(self):
-        i2c = board.I2C()
-        while not i2c.try_lock():
-            pass
-        try:
-            self._i2c = len(i2c.scan())
-        finally:
-            i2c.unlock()
-        return
-
-    def usb_rescan_timer(self):
-        return bool(check_deadline(ticks_ms(), self._usb_last_scan, 5000) is False)
-
-    def usb_time_reset(self):
-        self._usb_last_scan = ticks_ms()
-        return
-
-    def usb_scan(self):
-        # TODO Add USB detection here. Currently lies that it's connected
-        # https://github.com/adafruit/circuitpython/pull/3513
-        return True
-
-    def _ps_tog(self, key, keyboard, *args, **kwargs):
-        if self.enable:
-            keyboard._trigger_powersave_disable = True
-        else:
-            keyboard._trigger_powersave_enable = True
-
-    def _ps_enable(self, key, keyboard, *args, **kwargs):
-        if not self.enable:
-            keyboard._trigger_powersave_enable = True
-
-    def _ps_disable(self, key, keyboard, *args, **kwargs):
-        if self.enable:
-            keyboard._trigger_powersave_disable = True
